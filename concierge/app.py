@@ -312,13 +312,14 @@ def compose(action: str, ticket: dict, res: dict) -> dict:
             return {"note": "📍 Agent mesh: no new address found in the customer's messages - ask the customer for the full address."}
         if r == "updated":
             return {"note": f"📍 ADDRESS UPDATED via OMS MCP\nOrder {res['order_id']}: {res['old_address']} → {res['new_address']}\n"
-                            f"Before dispatch - ETA unchanged ({res['eta']}), no fee.",
+                            f"Before dispatch - ETA unchanged ({res['eta']}), no fee. Source: {res.get('address_source', 'ticket')}",
                     "reply": f"Hi {name},\n\nDone! We've updated the delivery address for order {res['order_id']} to:\n"
                              f"{res['new_address']}\n\nYour order hasn't shipped yet, so there's no delay - it's still due on "
                              f"{res['eta']}." + sig, "status": "solved"}
         if r == "redirect_booked":
             return {"note": f"📍 CARRIER REDIRECT BOOKED via OMS MCP\nOrder {res['order_id']} · {res['carrier']} ref {res['redirect_ref']}\n"
-                            f"{res['old_address']} → {res['new_address']} · new ETA {res['new_eta']} · fee AED 0",
+                            f"{res['old_address']} → {res['new_address']} · new ETA {res['new_eta']} · fee AED 0\n"
+                            f"Address taken from {res.get('address_source', 'the ticket')}",
                     "reply": f"Hi {name},\n\nYour parcel for order {res['order_id']} was already on its way, so we've asked "
                              f"{res['carrier']} to redirect it to:\n{res['new_address']}\n\nRedirect reference: {res['redirect_ref']}\n"
                              f"New expected delivery: {res['new_eta']}. There's no extra charge." + sig, "status": "pending"}
@@ -363,6 +364,8 @@ async def service_pipeline(ticket_id: int, action: str):
     ctx = secrets.token_hex(8)
     label, skill = ACTIONS[action]
     try:
+        if zd.is_mock() and not config.FORCE_MOCK:
+            raise RuntimeError("Zendesk is not connected - open the dashboard and click 'Connect Zendesk' (needed after every redeploy)")
         await step({"type": "reset", "mode": "service"}, pace=0.2)
         await step({"type": "stage", "text": f"Zendesk macro {label} on ticket #{ticket_id}"}, pace=0.3)
         await step({"from": "customer", "to": "concierge", "proto": "rest", "label": f"webhook · {action} · #{ticket_id}",
@@ -379,7 +382,8 @@ async def service_pipeline(ticket_id: int, action: str):
         latest = next((c["body"] for c in reversed(ticket.get("comments", [])) if c.get("role") == "customer"), customer_text)
 
         await step({"type": "stage", "text": f"Order Agent: {label} (OMS MCP)"}, pace=0.2)
-        res = await a2a_call("order", skill, {"order_id": order_id, "message": latest,
+        customer_msgs = [c["body"] for c in ticket.get("comments", []) if c.get("role") == "customer"]
+        res = await a2a_call("order", skill, {"order_id": order_id, "message": latest, "messages": customer_msgs,
                                               "reason": f"Zendesk ticket #{ticket_id}"}, ctx, skill)
 
         out = compose(action, ticket, res)

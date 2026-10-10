@@ -86,6 +86,8 @@ def build_agent_app(card: dict, handler: Handler) -> FastAPI:
                 "parts": [{"kind": "data", "data": result}],
             }]
         except Exception as exc:  # surfaced as a failed task, not a transport error
+            while isinstance(exc, BaseExceptionGroup) and exc.exceptions:
+                exc = exc.exceptions[0]
             state, artifacts = "failed", [{
                 "artifactId": str(uuid.uuid4()), "name": "error",
                 "parts": [{"kind": "text", "text": f"{type(exc).__name__}: {exc}"}],

@@ -238,9 +238,25 @@ MOCK_DEMO_TICKETS = {  # used when a webhook arrives in mock mode for a ticket w
 }
 
 
+MOCK_FILE = config.ROOT / "data" / "mock_tickets.json"
+
+
+class _MockStore(dict):
+    """Mock tickets persisted to disk - each MCP call runs in a fresh server process."""
+
+    def __init__(self):
+        try:
+            super().__init__({int(k): v for k, v in json.loads(MOCK_FILE.read_text()).items()})
+        except Exception:
+            super().__init__()
+
+    def save(self):
+        MOCK_FILE.write_text(json.dumps(self))
+
+
 class ZendeskMock:
-    _tickets: dict[int, dict] = {}
-    _next = 9001
+    def __init__(self):
+        self._tickets = _MockStore()
 
     async def whoami(self) -> dict:
         return {"mode": "mock", "subdomain": config.SUBDOMAIN, "name": "Mock Agent", "role": "admin"}
@@ -251,11 +267,11 @@ class ZendeskMock:
 
     async def create_ticket(self, subject, description, requester_name, requester_email,
                             priority, tags, order_id, inquiry_type) -> dict:
-        tid = ZendeskMock._next
-        ZendeskMock._next += 1
+        tid = max([9000, *self._tickets.keys()]) + 1
         self._tickets[tid] = {"subject": subject, "priority": priority, "tags": list(tags), "status": "new",
                               "order_id": order_id, "description": description,
                               "requester": {"name": requester_name, "email": requester_email}}
+        self._tickets.save()
         return {"id": tid, "status": "new", "priority": priority,
                 "url": f"{config.BASE_URL}/agent/tickets/{tid}",
                 "fields_applied": {"Order ID": order_id, "Inquiry type": inquiry_type, "Form": "Fashionocracy Customer Care"},
@@ -265,7 +281,9 @@ class ZendeskMock:
         return {"ticket_id": ticket_id, "note_added": True, "public": False}
 
     async def get_ticket(self, ticket_id) -> dict:
-        t = self._tickets.get(ticket_id) or MOCK_DEMO_TICKETS.get(int(ticket_id)) or MOCK_DEMO_TICKETS[9101]
+        t = self._tickets.get(int(ticket_id)) or MOCK_DEMO_TICKETS.get(int(ticket_id))
+        if not t:
+            raise RuntimeError(f"Ticket {ticket_id} not available in mock mode - connect Zendesk")
         return {"id": ticket_id, "subject": t.get("subject", "Demo ticket"), "status": t.get("status", "open"),
                 "priority": t.get("priority", "normal"), "tags": t.get("tags", []), "order_id": t.get("order_id"),
                 "requester": t.get("requester", {"name": "Demo Customer", "email": "demo@example.com"}),
@@ -274,15 +292,17 @@ class ZendeskMock:
                 "url": f"{config.BASE_URL}/agent/tickets/{ticket_id}"}
 
     async def add_public_reply(self, ticket_id, body, status) -> dict:
-        t = self._tickets.setdefault(ticket_id, {"tags": [], "status": "open"})
+        t = self._tickets.setdefault(int(ticket_id), {"tags": [], "status": "open"})
         t["status"] = status or t.get("status", "open")
+        self._tickets.save()
         return {"ticket_id": ticket_id, "reply_posted": True, "status": t["status"]}
 
     async def update_ticket(self, ticket_id, priority, status, add_tags, order_id, inquiry_type, remove_tags=None) -> dict:
-        t = self._tickets.setdefault(ticket_id, {"tags": [], "status": "new", "priority": "normal"})
+        t = self._tickets.setdefault(int(ticket_id), {"tags": [], "status": "new", "priority": "normal"})
         t["priority"] = priority or t.get("priority", "normal")
         t["status"] = status or t.get("status", "new")
         t["tags"] = sorted((set(t.get("tags", [])) | set(add_tags or [])) - set(remove_tags or []))
+        self._tickets.save()
         return {"id": ticket_id, "status": t["status"], "priority": t["priority"], "tags": t["tags"],
                 "fields_applied": {k: v for k, v in {"Order ID": order_id, "Inquiry type": inquiry_type}.items() if v}}
 

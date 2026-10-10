@@ -9,3 +9,4 @@ __pycache__
 .git
 .DS_Store
 Start Demo.command
+data/mock_tickets.json

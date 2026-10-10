@@ -26,20 +26,49 @@ CARD = agent_card(
     ],
 )
 
-ADDRESS_PATTERNS = [
-    r"(?:new (?:delivery |shipping )?address(?: is)?|deliver(?:y)? (?:it |this |the order )?to|ship (?:it )?to|"
-    r"send (?:it )?to|change (?:the |my )?(?:delivery |shipping )?address (?:for [^:]+? )?to|address(?: is)?\s*:)\s*:?\s*(.+)",
-]
+ADDRESS_LEAD = re.compile(
+    r"(?:(?:my\s+)?new\s+(?:delivery\s+|shipping\s+)?address(?:\s+is)?"
+    r"|(?:my\s+)?(?:delivery|shipping)\s+address\s+(?:is|should\s+be)"
+    r"|(?:change|update|switch|correct)\s+(?:the\s+|my\s+)?(?:delivery\s+|shipping\s+)?address(?:\s+for\s+[^:\n]*?)?\s+to"
+    r"|(?:deliver|ship|send|redirect)\s+(?:it|them|this|the\s+(?:order|parcel|package)|my\s+(?:order|parcel|package))?\s*to"
+    r"|address[ \t]*[:\-])[ \t]*[:\-]?[ \t]*",
+    re.I)
+STOP = re.compile(r"(?<=[A-Za-z0-9\)])\.\s+(?=[A-Z])|\s+(?:thanks|thank\s+you|please|cheers|regards|best)\b|[!?]", re.I)
 
 
 def extract_address(text: str) -> str | None:
-    for pat in ADDRESS_PATTERNS:
-        m = re.search(pat, text or "", re.I)
-        if m:
-            addr = m.group(1).strip().split("\n")[0]
-            addr = re.split(r"(?<=[a-z0-9\)])\.\s+(?=[A-Z])|\s+(?:thanks|thank you|please|cheers)\b", addr, flags=re.I)[0]
-            return addr.strip(" .") or None
-    return None
+    """Pull the new delivery address out of a customer message (handles same-line and next-line addresses)."""
+    if not text:
+        return None
+    best = None
+    for m in ADDRESS_LEAD.finditer(text):  # last mention wins ("actually, deliver to ...")
+        rest = text[m.end():]
+        first, _, after = rest.partition("\n")
+        if not first.strip():  # "New address:\n Villa 12\n Al Raha" -> take following non-empty lines
+            lines = [l.strip(" ,") for l in after.split("\n")]
+            block = []
+            for l in lines:
+                if not l:
+                    if block:
+                        break
+                    continue
+                if re.match(r"(?i)(thanks|thank you|regards|best|cheers)\b", l):
+                    break
+                block.append(l)
+            first = ", ".join(block[:4])
+        addr = STOP.split(first)[0].strip(" .,:;-\"'")
+        if len(addr) >= 6 and re.search(r"[A-Za-z]", addr) and not re.match(r"(?i)(for|of)\s+order\b", addr):
+            best = addr
+    return best
+
+
+def address_from_messages(messages: list[str]) -> tuple[str | None, int | None]:
+    """Newest customer message that contains an address wins."""
+    for i, msg in enumerate(reversed(messages or [])):
+        a = extract_address(msg)
+        if a:
+            return a, len(messages) - 1 - i
+    return None, None
 
 
 async def _investigate(m, order_id: str, intent: str, msg: str) -> dict:
@@ -105,11 +134,14 @@ async def handle(skill: str, data: dict, text: str) -> dict:
                 trk = await m.call("oms_track_shipment", {"order_id": order_id})
                 out = {"found": True, "order": order, "tracking": trk}
             elif skill == "change_address":
-                new = data.get("new_address") or extract_address(msg)
+                new, idx = (data.get("new_address"), None) if data.get("new_address") else \
+                    address_from_messages(data.get("messages") or [msg])
                 if not new:
                     out = {"result": "missing_address", "message": "No new address found in the customer's messages"}
                 else:
+                    await emit({"node": NODE, "state": "working", "detail": f"New address: {new[:28]}"}, pace=0.3)
                     out = await m.call("oms_update_delivery_address", {"order_id": order_id, "new_address": new})
+                    out["address_source"] = f"customer message #{idx + 1}" if idx is not None else "provided"
             elif skill == "issue_refund":
                 out = await m.call("oms_issue_refund", {"order_id": order_id, "reason": data.get("reason", "Customer request")})
             elif skill == "issue_store_credit":
