@@ -309,7 +309,12 @@ def compose(action: str, ticket: dict, res: dict) -> dict:
     if action == "change_address":
         r = res.get("result")
         if r == "missing_address":
-            return {"note": "📍 Agent mesh: no new address found in the customer's messages - ask the customer for the full address."}
+            return {"note": "📍 Agent mesh: no new address found in the customer's messages - asked the customer for it.",
+                    "reply": f"Hi {name},\n\nHappy to change the delivery address. Could you reply with the full new address "
+                             "(building/villa, street, area and emirate)? We'll update it straight away." + sig,
+                    "status": "pending"}
+        if r == "same_address":
+            return {"note": f"📍 Address in the customer's message is already the delivery address ({res['address']}) - no change made."}
         if r == "updated":
             return {"note": f"📍 ADDRESS UPDATED via OMS MCP\nOrder {res['order_id']}: {res['old_address']} → {res['new_address']}\n"
                             f"Before dispatch - ETA unchanged ({res['eta']}), no fee. Source: {res.get('address_source', 'ticket')}",
