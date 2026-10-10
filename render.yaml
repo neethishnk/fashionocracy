@@ -3,7 +3,7 @@ services:
   - type: web
     name: fashionocracy-agent-mesh
     runtime: docker
-    plan: starter            # always-on (free plan sleeps after 15 min, and Zendesk webhooks time out on cold start)
+    plan: free               # sleeps after 15 min idle - open the dashboard ~1 min before demoing
     healthCheckPath: /healthz
     autoDeploy: true
     envVars:
