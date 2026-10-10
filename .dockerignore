@@ -1,0 +1,11 @@
+.env
+.venv
+.zendesk_token.json
+.zendesk_webhook.json
+data/oms_state.json
+logs
+__pycache__
+*.pyc
+.git
+.DS_Store
+Start Demo.command

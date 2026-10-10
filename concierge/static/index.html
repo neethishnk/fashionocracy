@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fashionocracy · Agent Mesh</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070a12; --panel:#0d1220; --panel2:#111829; --line:#1c2640; --text:#e7ecf7; --muted:#8792ad; --dim:#4b5675;
+  --a2a:#a78bfa; --mcp:#2dd4bf; --rest:#fb923c; --user:#f472b6; --ok:#4ade80; --warn:#facc15; --err:#f87171;
+  --brand:#facc15;
+}
+*{box-sizing:border-box} html,body{height:100%}
+body{margin:0;background:radial-gradient(1200px 600px at 55% -10%,#141c36 0%,var(--bg) 60%);color:var(--text);
+  font:14px/1.45 Inter,system-ui,sans-serif;overflow:hidden}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+header{display:flex;align-items:center;gap:18px;padding:12px 20px;border-bottom:1px solid var(--line);background:rgba(7,10,18,.7);backdrop-filter:blur(8px)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.2px;font-size:16px}
+.logo .mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--brand),#f97316);display:grid;place-items:center;color:#111;font-weight:900}
+.logo small{display:block;font-weight:500;color:var(--muted);font-size:11.5px;letter-spacing:.3px}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:12px;color:var(--muted);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.dot.on{background:var(--ok);box-shadow:0 0 10px var(--ok)} .dot.mock{background:var(--warn);box-shadow:0 0 10px var(--warn)}
+.spacer{flex:1}
+.stats{display:flex;gap:10px}
+.stat{min-width:86px;padding:6px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.stat b{display:block;font-size:19px;line-height:1.1;font-variant-numeric:tabular-nums} .stat span{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+.stat.a2a b{color:var(--a2a)} .stat.mcp b{color:var(--mcp)} .stat.rest b{color:var(--rest)}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px}
+.btn{padding:8px 14px;background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+.btn:hover{border-color:#2d3a5e}
+.btn.primary{background:linear-gradient(135deg,var(--brand),#f97316);color:#111;font-weight:700;border:0}
+.btn.primary:disabled{opacity:.5;cursor:wait}
+main{display:grid;grid-template-columns:320px 1fr 360px;height:calc(100% - 59px)}
+aside,section{min-height:0}
+.col{display:flex;flex-direction:column;gap:14px;padding:16px;overflow:auto}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.card h3{margin:0 0 10px;font-size:11.5px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:8px}
+label{display:block;font-size:11.5px;color:var(--muted);margin:10px 0 4px}
+input,textarea,select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:9px 10px;font:inherit;font-size:13px}
+textarea{min-height:118px;resize:vertical}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--a2a)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:6px 10px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);font-size:12px;color:var(--text)}
+.chip.active{border-color:var(--brand);color:var(--brand)}
+.row{display:flex;gap:8px}
+.agentcard{display:flex;gap:10px;align-items:flex-start;padding:9px;border-radius:10px;border:1px dashed var(--line);margin-bottom:8px;opacity:.35;transition:.4s}
+.agentcard.found{opacity:1;border-style:solid;border-color:rgba(167,139,250,.45);background:rgba(167,139,250,.06)}
+.agentcard .ic{font-size:20px} .agentcard b{font-size:12.5px} .agentcard .sk{font-size:11.5px;color:var(--muted)}
+/* center */
+.stage{position:relative;padding:14px 10px 10px;display:flex;flex-direction:column}
+.banner{height:40px;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:600;font-size:15px;color:var(--text);letter-spacing:.2px}
+.banner .tag{font-size:11px;padding:3px 8px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);color:var(--muted)}
+svg{flex:1;width:100%;min-height:0}
+.edge{stroke:var(--line);stroke-width:2;fill:none;transition:stroke .3s}
+.edge.hot-a2a{stroke:var(--a2a)} .edge.hot-mcp{stroke:var(--mcp)} .edge.hot-rest{stroke:var(--rest)} .edge.hot-user{stroke:var(--user)}
+.edgelabel{fill:var(--dim);font-size:11px;font-family:"JetBrains Mono",monospace;letter-spacing:.5px}
+.node rect{fill:var(--panel);stroke:var(--line);stroke-width:1.5;transition:all .3s}
+.node .title{fill:var(--text);font-weight:700;font-size:16px}
+.node .sub{fill:var(--muted);font-size:12.5px}
+.node .detail{fill:var(--muted);font-size:12px;font-family:"JetBrains Mono",monospace}
+.node .emoji{font-size:28px}
+.node.working rect{stroke:var(--brand);filter:url(#glow)}
+.node.done rect{stroke:var(--ok)}
+.node.done .detail{fill:var(--ok)} .node.working .detail{fill:var(--brand)}
+.node .ring{fill:none;stroke:var(--brand);stroke-width:2;opacity:0}
+.node.working .ring{animation:pulse 1.2s infinite}
+@keyframes pulse{0%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(1.12)}}
+.group{fill:none;stroke:#1a2340;stroke-dasharray:4 6;stroke-width:1.2}
+.grouplabel{fill:#33406a;font-size:10.5px;letter-spacing:1.6px;font-weight:600}
+.packet{filter:url(#glow)}
+.legend{display:flex;gap:16px;justify-content:center;padding:4px 0 2px;font-size:11.5px;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+/* result */
+.result{position:absolute;left:50%;bottom:44px;transform:translate(-50%,30px);width:min(760px,94%);opacity:0;pointer-events:none;transition:.5s cubic-bezier(.2,.8,.2,1);
+  background:linear-gradient(180deg,#121a30,#0d1324);border:1px solid rgba(74,222,128,.45);border-radius:18px;padding:18px 20px;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 1px rgba(74,222,128,.1)}
+.result.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.result .top{display:flex;align-items:center;gap:16px}
+.result .tnum{font-size:34px;font-weight:800;color:var(--ok);line-height:1}
+.result .meta{flex:1;color:var(--muted);font-size:12.5px}
+.result .meta b{color:var(--text);font-size:15px;display:block;margin-bottom:2px}
+.result .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+.kv{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.kv span{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px} .kv b{font-size:13px}
+.res{padding:10px 12px;border-radius:10px;background:rgba(250,204,21,.07);border:1px solid rgba(250,204,21,.25);font-size:13px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tags span{font-size:11px;padding:3px 8px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);color:var(--muted);font-family:"JetBrains Mono",monospace}
+.result .actions{display:flex;gap:8px;margin-top:14px}
+.close{background:none;color:var(--muted);font-size:18px;padding:2px 6px}
+/* log */
+.log{padding:0;display:flex;flex-direction:column;border-left:1px solid var(--line);background:rgba(13,18,32,.6)}
+.loghead{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
+.loghead h3{margin:0;font-size:11.5px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.filters{display:flex;gap:4px}
+.filters button{font-size:11px;padding:3px 8px;border-radius:6px;background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+.filters button.off{opacity:.35}
+#log{flex:1;overflow:auto;padding:8px 10px 20px}
+.entry{border-left:3px solid var(--line);background:var(--panel);border-radius:0 10px 10px 0;margin:6px 0;padding:7px 10px;animation:in .35s ease}
+@keyframes in{from{opacity:0;transform:translateX(12px)}to{opacity:1}}
+.entry.a2a{border-color:var(--a2a)} .entry.mcp{border-color:var(--mcp)} .entry.rest{border-color:var(--rest)} .entry.user{border-color:var(--user)} .entry.err{border-color:var(--err)}
+.entry .h{display:flex;gap:8px;align-items:baseline;font-size:12px}
+.entry .proto{font-size:10px;font-weight:700;letter-spacing:.8px;padding:1px 6px;border-radius:4px;background:var(--panel2)}
+.entry.a2a .proto{color:var(--a2a)} .entry.mcp .proto{color:var(--mcp)} .entry.rest .proto{color:var(--rest)} .entry.user .proto{color:var(--user)}
+.entry .route{color:var(--muted);font-size:11.5px}
+.entry .lbl{font-family:"JetBrains Mono",monospace;font-size:12px;margin-top:2px;word-break:break-word}
+.entry .t{margin-left:auto;color:var(--dim);font-size:10.5px;font-family:"JetBrains Mono",monospace}
+details{margin-top:4px} summary{cursor:pointer;color:var(--dim);font-size:11px}
+pre{margin:6px 0 0;max-height:260px;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;font:11px/1.45 "JetBrains Mono",monospace;color:#b7c2dc;white-space:pre-wrap;word-break:break-word}
+.k{color:#93c5fd}.s{color:#86efac}.n{color:#fdba74}.b{color:#f9a8d4}
+.stageline{color:var(--brand);font-size:11.5px;font-weight:600;margin:12px 2px 4px;letter-spacing:.3px}
+.empty{color:var(--dim);text-align:center;margin-top:40px;font-size:12.5px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:9}
+.modal.show{display:flex}
+.modal .box{width:min(720px,92vw);max-height:80vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--err);color:var(--text);padding:10px 16px;border-radius:10px;display:none;z-index:10;max-width:80vw}
+@media (max-width:1300px){main{grid-template-columns:300px 1fr 340px}.stats .stat:nth-child(4){display:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><div class="mark">F</div><div>Fashionocracy Agent Mesh<small>A2A orchestration · MCP tooling · Zendesk system of record</small></div></div>
+  <span class="pill" id="modePill"><span class="dot" id="modeDot"></span><span id="modeText">checking…</span></span>
+  <button class="btn" id="connectBtn" style="display:none">Connect Zendesk</button>
+  <div class="spacer"></div>
+  <div class="stats">
+    <div class="stat a2a"><b id="cA2A">0</b><span>A2A messages</span></div>
+    <div class="stat mcp"><b id="cMCP">0</b><span>MCP tool calls</span></div>
+    <div class="stat rest"><b id="cREST">0</b><span>API calls</span></div>
+    <div class="stat"><b id="cTime">0.0s</b><span>Elapsed</span></div>
+  </div>
+</header>
+
+<main>
+  <aside class="col">
+    <div class="card">
+      <h3>📱 Customer channel</h3>
+      <div class="chips" id="scenarios"></div>
+      <div class="row">
+        <div style="flex:1"><label>Name</label><input id="name"></div>
+        <div style="width:118px"><label>Channel</label>
+          <select id="channel"><option>WhatsApp</option><option>Email</option><option>Instagram DM</option><option>Web chat</option></select></div>
+      </div>
+      <label>Email</label><input id="email">
+      <label>Message</label><textarea id="message"></textarea>
+      <button class="btn primary" id="sendBtn" style="width:100%;margin-top:12px;padding:12px">Send message ➜</button>
+    </div>
+    <div class="card">
+      <h3>🪪 Discovered agent cards <span class="mono" style="color:var(--dim);text-transform:none;letter-spacing:0">/.well-known/agent-card.json</span></h3>
+      <div id="cards"></div>
+    </div>
+  </aside>
+
+  <section class="stage">
+    <div class="banner" id="banner"><span class="tag">READY</span><span>Send a customer message to start the mesh</span></div>
+    <svg id="graph" viewBox="10 30 1190 590" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <rect class="group" x="470" y="40" width="300" height="560" rx="20"/><text class="grouplabel" x="490" y="64">A2A AGENT MESH</text>
+      <rect class="group" x="790" y="390" width="400" height="210" rx="20"/><text class="grouplabel" x="810" y="414">MCP · ZENDESK</text>
+      <g id="edges"></g><g id="nodes"></g><g id="packets"></g>
+    </svg>
+    <div class="legend"><span><i style="background:var(--user)"></i>Customer</span><span><i style="background:var(--a2a)"></i>A2A JSON-RPC</span><span><i style="background:var(--mcp)"></i>MCP</span><span><i style="background:var(--rest)"></i>REST · webhook · OAuth API</span></div>
+
+    <div class="result" id="result">
+      <div class="top">
+        <div class="tnum" id="rNum">#—</div>
+        <div class="meta"><b id="rTitle">Ticket created in Zendesk</b><span id="rSub"></span></div>
+        <button class="close" id="rClose" title="Hide">✕</button>
+      </div>
+      <div class="grid">
+        <div class="kv"><span id="kL1">Intent</span><b id="rIntent"></b></div>
+        <div class="kv"><span id="kL2">Priority</span><b id="rPrio"></b></div>
+        <div class="kv"><span id="kL3">Customer</span><b id="rCust"></b></div>
+        <div class="kv"><span id="kL4">Time to triage</span><b id="rTime"></b></div>
+      </div>
+      <div class="res">➡️ <span id="rRes"></span></div>
+      <div class="tags" id="rTags"></div>
+      <div class="actions">
+        <a class="btn primary" id="rOpen" target="_blank" style="text-decoration:none">Open ticket in Zendesk ↗</a>
+        <button class="btn" id="rNote">View briefing note</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="log">
+    <div class="loghead"><h3>Protocol log</h3>
+      <div class="filters" id="filters"><button data-p="a2a">A2A</button><button data-p="mcp">MCP</button><button data-p="rest">API</button></div></div>
+    <div id="log"><div class="empty">Every A2A message, MCP tool call and API request appears here — click to inspect the payload.</div></div>
+  </section>
+</main>
+
+<div class="modal" id="modal"><div class="box"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">Written to Zendesk by the agent mesh</h3><button class="close" onclick="modal.classList.remove('show')">✕</button></div><pre id="noteBody" style="max-height:60vh"></pre></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const NODES = {
+  customer: {x:120, y:320, t:"Customer", s:"WhatsApp · Email · DM", e:"🛍️"},
+  concierge:{x:345, y:320, t:"Concierge", s:"A2A orchestrator", e:"✨"},
+  triage:   {x:620, y:130, t:"Triage Agent", s:"intent · sentiment", e:"🧠"},
+  order:    {x:620, y:320, t:"Order Agent", s:"OMS · WMS · returns", e:"📦"},
+  zdagent:  {x:620, y:510, t:"Zendesk Agent", s:"MCP client", e:"🎫"},
+  oms:      {x:930, y:230, t:"OMS MCP Server", s:"orders · refunds · address", e:"🏬"},
+  mcp:      {x:905, y:510, t:"Zendesk MCP Server", s:"5 tools · stdio", e:"🔌"},
+  zendesk:  {x:1115,y:510, t:"Zendesk", s:"yellow-41160", e:"🟢", w:150},
+};
+const EDGES = [["customer","concierge","user"],["concierge","triage","a2a"],["concierge","order","a2a"],["concierge","zdagent","a2a"],
+               ["order","oms","mcp"],["zdagent","mcp","mcp"],["mcp","zendesk","rest"]];
+const COLORS = {a2a:"#a78bfa",mcp:"#2dd4bf",rest:"#fb923c",user:"#f472b6"};
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs={}, parent) => { const e=document.createElementNS(NS,tag); for (const k in attrs) e.setAttribute(k,attrs[k]); parent&&parent.appendChild(e); return e; };
+const edgeEls = {};
+function drawGraph(){
+  for (const [a,b,p] of EDGES){
+    const A=NODES[a],B=NODES[b];
+    const line = el("line",{x1:A.x,y1:A.y,x2:B.x,y2:B.y,class:"edge"},$("edges"));
+    edgeEls[a+">"+b]=line; edgeEls[b+">"+a]=line;
+    const lx=(A.x+B.x)/2, ly=(A.y+B.y)/2 - 8;
+    el("text",{x:lx,y:ly,"text-anchor":"middle",class:"edgelabel"},$("edges")).textContent = {a2a:"A2A",mcp:"MCP",rest:"REST",user:"msg"}[p];
+  }
+  for (const id in NODES){
+    const n=NODES[id], w=n.w||204, h=96;
+    const g = el("g",{class:"node",id:"n-"+id,transform:`translate(${n.x-w/2},${n.y-h/2})`},$("nodes"));
+    el("rect",{class:"ring",x:-4,y:-4,width:w+8,height:h+8,rx:18,style:`transform-origin:${w/2}px ${h/2}px`},g);
+    el("rect",{width:w,height:h,rx:14},g);
+    el("text",{x:14,y:40,class:"emoji"},g).textContent=n.e;
+    el("text",{x:56,y:32,class:"title"},g).textContent=n.t;
+    el("text",{x:56,y:51,class:"sub"},g).textContent=n.s;
+    el("text",{x:14,y:80,class:"detail",id:"d-"+id},g).textContent="idle";
+  }
+}
+drawGraph();
+
+function setNode(id,state,detail){
+  const g=$("n-"+id); if(!g) return;
+  g.classList.remove("working","done"); if(state&&state!=="idle") g.classList.add(state);
+  if(detail!==undefined){ const d=$("d-"+id); d.textContent = detail.length>26? detail.slice(0,25)+"…" : detail; }
+}
+function packet(from,to,proto){
+  const A=NODES[from],B=NODES[to]; if(!A||!B) return;
+  const line=edgeEls[from+">"+to]; const cls="hot-"+proto;
+  if(line){ line.classList.add(cls); setTimeout(()=>line.classList.remove(cls),900); }
+  const c=el("circle",{r:7,fill:COLORS[proto]||"#fff",class:"packet"},$("packets"));
+  const trail=el("circle",{r:13,fill:COLORS[proto]||"#fff",opacity:.18},$("packets"));
+  const t0=performance.now(), dur=650;
+  (function tick(now){
+    let k=Math.min(1,(now-t0)/dur); k=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+    const x=A.x+(B.x-A.x)*k, y=A.y+(B.y-A.y)*k;
+    c.setAttribute("cx",x); c.setAttribute("cy",y); trail.setAttribute("cx",x); trail.setAttribute("cy",y);
+    if(k<1) requestAnimationFrame(tick); else { c.remove(); trail.remove(); }
+  })(t0);
+}
+
+// ---------- log
+const counts={a2a:0,mcp:0,rest:0}; const hidden=new Set();
+function hl(json){
+  return json.replace(/&/g,"&amp;").replace(/</g,"&lt;")
+   .replace(/("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, m=>{
+     let c="n"; if(/^"/.test(m)) c=/:$/.test(m)?"k":"s"; else if(/true|false|null/.test(m)) c="b"; return `<span class="${c}">${m}</span>`; });
+}
+let tStart=null, timer=null;
+function stamp(){ return tStart? "+"+((performance.now()-tStart)/1000).toFixed(1)+"s" : ""; }
+function logEntry(ev){
+  const log=$("log"); log.querySelector(".empty")?.remove();
+  const p=ev.proto; const e=document.createElement("div"); e.className="entry "+p; e.dataset.p=p;
+  if(hidden.has(p)) e.style.display="none";
+  const name = id => (NODES[id]?.t)||id;
+  e.innerHTML=`<div class="h"><span class="proto">${{a2a:"A2A",mcp:"MCP",rest:"API",user:"MSG"}[p]}</span><span class="route">${name(ev.from)} → ${name(ev.to)}</span><span class="t">${stamp()}</span></div>
+    <div class="lbl"></div>${ev.payload?`<details><summary>payload</summary><pre>${hl(JSON.stringify(ev.payload,null,2))}</pre></details>`:""}`;
+  e.querySelector(".lbl").textContent=ev.label||"";
+  log.appendChild(e); log.scrollTop=log.scrollHeight;
+}
+function stageLine(text){ const d=document.createElement("div"); d.className="stageline"; d.textContent="▸ "+text; $("log").appendChild(d); }
+$("filters").addEventListener("click",e=>{ const p=e.target.dataset.p; if(!p) return; e.target.classList.toggle("off");
+  hidden.has(p)?hidden.delete(p):hidden.add(p); document.querySelectorAll(`.entry[data-p="${p}"]`).forEach(x=>x.style.display=hidden.has(p)?"none":""); });
+
+// ---------- agent cards
+const CARD_SLOTS={triage:"🧠",order:"📦",zdagent:"🎫"};
+function renderCards(){ $("cards").innerHTML=Object.entries(CARD_SLOTS).map(([id,ic])=>
+  `<div class="agentcard" id="c-${id}"><div class="ic">${ic}</div><div><b>${NODES[id].t}</b><div class="sk">not yet discovered</div></div></div>`).join(""); }
+renderCards();
+function showCard(c){ const d=$("c-"+c.node); if(!d) return; d.classList.add("found");
+  d.querySelector("b").textContent=c.name; d.querySelector(".sk").textContent="skills: "+c.skills.join(" · "); }
+
+// ---------- result
+let lastNote="";
+function showResult(ev){
+  setKL(["Intent","Priority","Customer","Time to triage"]);
+  const z=ev.zendesk, t=ev.triage, o=ev.order;
+  $("rNum").textContent="#"+z.ticket_id;
+  $("rTitle").textContent = z.mode==="live" ? "Ticket created & enriched in Zendesk" : "Ticket created (mock mode)";
+  $("rSub").textContent=`${z.history_count} prior ticket(s) found · ${Object.keys(z.fields_applied||{}).join(", ")||"no custom fields"} set · copilot auto assist armed`;
+  $("rIntent").textContent=t.intent_label; $("rPrio").textContent=(z.priority||t.recommended_priority||"").toUpperCase();
+  $("rCust").textContent=o.customer? `${o.customer.tier} · AED ${o.customer.lifetime_value_aed}` : "unknown";
+  $("rTime").textContent=ev.elapsed+"s";
+  $("rRes").textContent=o.recommended_resolution||"";
+  $("rTags").innerHTML=(z.tags||[]).map(x=>`<span>${x}</span>`).join("");
+  $("rOpen").href=z.url; $("rOpen").style.display = z.mode==="live" ? "" : "none";
+  lastNote=z.note||""; $("result").classList.add("show");
+}
+function setKL(a){ a.forEach((t,i)=>$("kL"+(i+1)).textContent=t); }
+function showService(ev){
+  const r=ev.result||{}; setKL(["Action","OMS result","Reference","Time"]);
+  $("rNum").textContent="#"+ev.ticket_id;
+  $("rTitle").textContent=`${ev.label} — done via MCP`;
+  $("rSub").textContent=`Triggered from a Zendesk macro · order ${ev.order_id||"?"} · ticket now ${ev.status||"updated"}`;
+  $("rIntent").textContent=ev.label.replace(/^\S+\s/,"");
+  $("rPrio").textContent=(r.result||(r.found?"fetched":"—")).replace(/_/g," ");
+  $("rCust").textContent=r.refund_id||r.credit_code||r.redirect_ref||(r.new_address?"address updated":"")||(r.order?r.order.customer.tier+" · AED "+r.order.customer.lifetime_value_aed:"—");
+  $("rTime").textContent=ev.elapsed+"s";
+  $("rRes").textContent=ev.reply? "Customer reply posted: "+ev.reply.split("\n").slice(2,4).join(" ") : "Internal note added for the agent";
+  $("rTags").innerHTML=(ev.tags||[]).map(x=>`<span>${x}</span>`).join("");
+  $("rOpen").href=ev.url; $("rOpen").style.display="";
+  lastNote=ev.note+(ev.reply? "\n\n— Public reply —\n"+ev.reply : ""); $("result").classList.add("show");
+}
+$("rClose").onclick=()=>$("result").classList.remove("show");
+$("rNote").onclick=()=>{ $("noteBody").textContent=lastNote; $("modal").classList.add("show"); };
+
+// ---------- SSE
+function banner(text,tag="LIVE"){ $("banner").innerHTML=`<span class="tag">${tag}</span><span></span>`; $("banner").lastChild.textContent=text; }
+function setTitle(id,t,sub){ const g=$("n-"+id); if(!g) return; g.querySelector(".title").textContent=t; g.querySelector(".sub").textContent=sub; }
+function reset(mode){
+  for(const id in NODES) setNode(id,"idle","idle");
+  if(mode==="service"){ setTitle("customer","Zendesk agent","macro → trigger → webhook"); NODES.customer.t="Zendesk trigger"; }
+  else { setTitle("customer","Customer","WhatsApp · Email · DM"); NODES.customer.t="Customer"; }
+  counts.a2a=counts.mcp=counts.rest=0; ["cA2A","cMCP","cREST"].forEach(i=>$(i).textContent="0");
+  $("log").innerHTML=""; renderCards(); $("result").classList.remove("show");
+  tStart=performance.now(); clearInterval(timer); timer=setInterval(()=>$("cTime").textContent=((performance.now()-tStart)/1000).toFixed(1)+"s",100);
+}
+const es=new EventSource("/events");
+es.onmessage=m=>{
+  const ev=JSON.parse(m.data);
+  if(ev.type==="reset") return reset(ev.mode);
+  if(ev.type==="stage"){ banner(ev.text,"STEP"); stageLine(ev.text); return; }
+  if(ev.type==="result"){ clearInterval(timer); $("cTime").textContent=ev.elapsed+"s"; banner(`Resolved routing in ${ev.elapsed}s — ticket #${ev.zendesk.ticket_id} is ready for the agent`,"DONE");
+    setNode("customer","done","message received"); showResult(ev); $("sendBtn").disabled=false; return; }
+  if(ev.type==="service_result"){ clearInterval(timer); $("cTime").textContent=ev.elapsed+"s";
+    banner(`${ev.label} completed on ticket #${ev.ticket_id} in ${ev.elapsed}s`,"DONE"); setNode("customer","done","done ✓"); showService(ev); $("sendBtn").disabled=false; return; }
+  if(ev.type==="error"){ clearInterval(timer); banner(ev.text,"ERROR"); const d=document.createElement("div"); d.className="entry err"; d.textContent=ev.text; $("log").appendChild(d);
+    toast(ev.text); $("sendBtn").disabled=false; return; }
+  if(ev.node) setNode(ev.node,ev.state,ev.detail);
+  if(ev.from){
+    packet(ev.from,ev.to,ev.proto); logEntry(ev);
+    if(ev.card) showCard(ev.card);
+    if(ev.proto==="a2a"){ counts.a2a++; $("cA2A").textContent=counts.a2a; }
+    if(ev.proto==="mcp" && /^tools\/call/.test(ev.label)){ counts.mcp++; $("cMCP").textContent=counts.mcp; }
+    if(ev.proto==="rest" && ev.label!=="200 OK"){ counts.rest++; $("cREST").textContent=counts.rest; }
+    if(ev.from==="concierge") setNode("concierge","working", ev.label.replace("message/send · ","→ "));
+    if(ev.from==="customer") setNode("customer","working","sending…");
+    if(ev.to==="oms") setNode("oms","working",ev.label.replace("tools/call ",""));
+    if(ev.from==="oms") setNode("oms","done",ev.label.replace("result ","✓ "));
+    if(ev.to==="mcp") setNode("mcp","working",ev.label);
+    if(ev.to==="zendesk") setNode("zendesk","working","API call…");
+    if(ev.from==="zendesk") setNode("zendesk","done","200 OK");
+  }
+};
+
+// ---------- scenarios + run
+const SCENARIOS=[
+  {k:"Wrong colour", name:"Rania Saad", email:"rania.saad@example.com", channel:"WhatsApp",
+   msg:"Seriously disappointed! I ordered the beige linen wrap dress (order FSH-101736) and received a brown one instead. I need it for a wedding on Friday — what can you do?"},
+  {k:"Damaged item", name:"Fatima Al Zaabi", email:"fatima.alzaabi@example.com", channel:"Email",
+   msg:"Hi, my new ivory silk midi dress from order FSH-102418 arrived with a stain on the front. Really upset as it was a gift. Please help."},
+  {k:"Where's my order", name:"Yasmin Aziz", email:"yasmin.aziz@example.com", channel:"Instagram DM",
+   msg:"Where is my order FSH-103052?? It was supposed to arrive on the 3rd and I'm still waiting. This is so frustrating."},
+  {k:"Size exchange", name:"Rohan Mehta", email:"rohan.mehta@example.com", channel:"Web chat",
+   msg:"The Chelsea boots from order FSH-103377 are too small for me. Can I exchange them for a size up?"},
+  {k:"📍 Change address", name:"Yasmin Aziz", email:"yasmin.aziz@example.com", channel:"WhatsApp",
+   msg:"Hi, I've moved! Please change the delivery address for order FSH-103052 to: Villa 12, Al Raha Gardens, Abu Dhabi. Thanks!"},
+  {k:"📍 Address (not shipped)", name:"Layla Haddad", email:"layla.haddad@example.com", channel:"Email",
+   msg:"Hello, could you update the address for my order FSH-104210? New address: Office 2201, ICD Brookfield Place, DIFC, Dubai. Thank you"},
+  {k:"💸 Refund", name:"Rohan Mehta", email:"rohan.mehta@example.com", channel:"Email",
+   msg:"The Chelsea boots from order FSH-103377 just aren't for me. I'd like my money back please."},
+];
+function pick(i){ const s=SCENARIOS[i]; $("name").value=s.name; $("email").value=s.email; $("channel").value=s.channel; $("message").value=s.msg;
+  document.querySelectorAll(".chip").forEach((c,j)=>c.classList.toggle("active",i===j)); }
+$("scenarios").innerHTML=SCENARIOS.map((s,i)=>`<button class="chip" data-i="${i}">${s.k}</button>`).join("");
+$("scenarios").onclick=e=>{ if(e.target.dataset.i) pick(+e.target.dataset.i); };
+pick(0);
+$("sendBtn").onclick=async()=>{
+  $("sendBtn").disabled=true;
+  const r=await fetch("/api/run",{method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({name:$("name").value,email:$("email").value,channel:$("channel").value,message:$("message").value})});
+  if(!r.ok){ toast((await r.json()).error||"Could not start"); $("sendBtn").disabled=false; }
+};
+function toast(t){ $("toast").textContent=t; $("toast").style.display="block"; setTimeout(()=>$("toast").style.display="none",6000); }
+
+// ---------- status
+async function status(){
+  try{
+    const s=await (await fetch("/api/status")).json();
+    $("modeDot").className="dot "+(s.mode==="live"?"on":"mock");
+    $("modeText").textContent = s.mode==="live" ? `LIVE · ${s.subdomain}.zendesk.com` : (s.forced_mock?"MOCK MODE (ZENDESK_MOCK=1)":"MOCK MODE · Zendesk not connected");
+    $("connectBtn").style.display = (!s.connected && s.oauth_configured) ? "" : "none";
+    NODES.zendesk.s=s.subdomain;
+  }catch(e){ $("modeText").textContent="server offline"; }
+}
+$("connectBtn").onclick=()=>location.href="/oauth/start";
+status(); setInterval(status,10000);
+</script>
+</body>
+</html>

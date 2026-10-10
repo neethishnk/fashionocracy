@@ -1,0 +1,172 @@
+{
+  "orders": {
+    "FSH-101736": {
+      "customer": {
+        "name": "Rania Saad",
+        "email": "rania.saad@example.com",
+        "tier": "Gold",
+        "lifetime_orders": 14,
+        "lifetime_value_aed": 6120
+      },
+      "item": {
+        "sku": "FX-LIN-DRS-BEI-M",
+        "name": "Linen Wrap Dress",
+        "colour": "Beige",
+        "size": "M",
+        "price_aed": 389
+      },
+      "shipped_item": {
+        "sku": "FX-LIN-DRS-BRN-M",
+        "colour": "Brown",
+        "size": "M"
+      },
+      "status": "Delivered",
+      "carrier": "Aramex",
+      "tracking": "ARX5531907264",
+      "ordered_on": "2026-09-24",
+      "delivered_on": "2026-09-29",
+      "eta": "2026-09-29",
+      "warehouse": "Dubai South DC",
+      "shipping_address": "Villa 7, Jumeirah 3, Dubai"
+    },
+    "FSH-102418": {
+      "customer": {
+        "name": "Fatima Al Zaabi",
+        "email": "fatima.alzaabi@example.com",
+        "tier": "Platinum",
+        "lifetime_orders": 31,
+        "lifetime_value_aed": 18450
+      },
+      "item": {
+        "sku": "FX-SLK-MID-IVR-S",
+        "name": "Silk Midi Dress",
+        "colour": "Ivory",
+        "size": "S",
+        "price_aed": 749
+      },
+      "shipped_item": {
+        "sku": "FX-SLK-MID-IVR-S",
+        "colour": "Ivory",
+        "size": "S"
+      },
+      "status": "Delivered",
+      "carrier": "DHL Express",
+      "tracking": "DHL7710042318",
+      "ordered_on": "2026-10-01",
+      "delivered_on": "2026-10-05",
+      "eta": "2026-10-05",
+      "warehouse": "Dubai South DC",
+      "shipping_address": "Villa 7, Jumeirah 3, Dubai"
+    },
+    "FSH-103052": {
+      "customer": {
+        "name": "Yasmin Aziz",
+        "email": "yasmin.aziz@example.com",
+        "tier": "Silver",
+        "lifetime_orders": 3,
+        "lifetime_value_aed": 910
+      },
+      "item": {
+        "sku": "FX-DNM-JKT-IND-L",
+        "name": "Cropped Denim Jacket",
+        "colour": "Indigo",
+        "size": "L",
+        "price_aed": 299
+      },
+      "shipped_item": {
+        "sku": "FX-DNM-JKT-IND-L",
+        "colour": "Indigo",
+        "size": "L"
+      },
+      "status": "In transit",
+      "carrier": "Aramex",
+      "tracking": "ARX5532118840",
+      "ordered_on": "2026-09-28",
+      "delivered_on": null,
+      "eta": "2026-10-03",
+      "last_scan": "Held at Abu Dhabi hub - address verification",
+      "warehouse": "Dubai South DC",
+      "shipping_address": "Flat 302, Al Bateen Tower, Abu Dhabi"
+    },
+    "FSH-103377": {
+      "customer": {
+        "name": "Rohan Mehta",
+        "email": "rohan.mehta@example.com",
+        "tier": "Gold",
+        "lifetime_orders": 9,
+        "lifetime_value_aed": 3980
+      },
+      "item": {
+        "sku": "FX-LTH-BOT-BLK-42",
+        "name": "Chelsea Leather Boots",
+        "colour": "Black",
+        "size": "42",
+        "price_aed": 559
+      },
+      "shipped_item": {
+        "sku": "FX-LTH-BOT-BLK-42",
+        "colour": "Black",
+        "size": "42"
+      },
+      "status": "Delivered",
+      "carrier": "Aramex",
+      "tracking": "ARX5532390017",
+      "ordered_on": "2026-10-02",
+      "delivered_on": "2026-10-06",
+      "eta": "2026-10-06",
+      "warehouse": "Dubai South DC",
+      "shipping_address": "Villa 7, Jumeirah 3, Dubai"
+    },
+    "FSH-104210": {
+      "customer": {
+        "name": "Layla Haddad",
+        "email": "layla.haddad@example.com",
+        "tier": "Platinum",
+        "lifetime_orders": 22,
+        "lifetime_value_aed": 12740
+      },
+      "item": {
+        "sku": "FX-CSH-CRD-CAM-M",
+        "name": "Cashmere Cardigan",
+        "colour": "Camel",
+        "size": "M",
+        "price_aed": 629
+      },
+      "shipped_item": {
+        "sku": "FX-CSH-CRD-CAM-M",
+        "colour": "Camel",
+        "size": "M"
+      },
+      "status": "Processing",
+      "carrier": "Aramex",
+      "tracking": "pending",
+      "ordered_on": "2026-10-09",
+      "delivered_on": null,
+      "eta": "2026-10-13",
+      "shipping_address": "Apt 1804, Marina Gate 2, Dubai Marina, Dubai",
+      "warehouse": "Dubai South DC"
+    }
+  },
+  "stock": {
+    "FX-LIN-DRS-BEI-M": {
+      "Dubai South DC": 12,
+      "Abu Dhabi Store": 3
+    },
+    "FX-SLK-MID-IVR-S": {
+      "Dubai South DC": 4,
+      "Abu Dhabi Store": 0
+    },
+    "FX-DNM-JKT-IND-L": {
+      "Dubai South DC": 0,
+      "Abu Dhabi Store": 2
+    },
+    "FX-LTH-BOT-BLK-43": {
+      "Dubai South DC": 7,
+      "Abu Dhabi Store": 1
+    },
+    "FX-LTH-BOT-BLK-41": {
+      "Dubai South DC": 2,
+      "Abu Dhabi Store": 0
+    }
+  }
+}

@@ -1,0 +1,21 @@
+# Render Blueprint - New > Blueprint > pick this repo
+services:
+  - type: web
+    name: fashionocracy-agent-mesh
+    runtime: docker
+    plan: starter            # always-on (free plan sleeps after 15 min, and Zendesk webhooks time out on cold start)
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: ZENDESK_SUBDOMAIN
+        value: yellow-41160
+      - key: ZENDESK_CLIENT_ID
+        value: fashionocracy_agent_mesh
+      - key: ZENDESK_CLIENT_SECRET
+        sync: false          # you paste it in the Render dashboard
+      - key: DASHBOARD_PASSWORD
+        sync: false          # password for the hosted dashboard (any username)
+      - key: DEMO_PACE
+        value: "0.8"
+      - key: ZENDESK_MOCK
+        value: "0"
