@@ -389,6 +389,7 @@ async def service_pipeline(ticket_id: int, action: str):
         await step({"type": "stage", "text": "Zendesk Agent writes back (MCP)"}, pace=0.2)
         zres = await a2a_call("zdagent", "post_update", upd, ctx, "post_update")
         await step({"node": "concierge", "state": "done", "detail": f"{label} done"}, pace=0.2)
+        await publish({"type": "orders_changed"})
         await step({"type": "service_result", "elapsed": round(time.time() - t0, 1), "action": action, "label": label,
                     "ticket_id": ticket_id, "url": ticket.get("url"), "order_id": order_id, "result": res,
                     "note": out["note"], "reply": out.get("reply"), "status": zres.get("status"),
@@ -418,3 +419,28 @@ async def zendesk_webhook(req: Request):
 
     asyncio.create_task(guarded())
     return {"ok": True, "accepted": action, "ticket_id": int(tid)}
+
+
+# ------------------------------------------------------------------ Orders view (reads the OMS MCP server's state)
+OMS_SEED = config.ROOT / "data" / "orders.json"
+OMS_STATE = config.ROOT / "data" / "oms_state.json"
+
+
+@app.get("/api/orders")
+async def list_orders():
+    src = OMS_STATE if OMS_STATE.exists() else OMS_SEED
+    db = json.loads(src.read_text())
+    seed = json.loads(OMS_SEED.read_text())["orders"]
+    rows = []
+    for oid, o in db["orders"].items():
+        rows.append({"order_id": oid, **o, "original_address": seed.get(oid, {}).get("shipping_address"),
+                     "mismatch": (o["item"]["colour"], o["item"]["size"]) != (o["shipped_item"]["colour"], o["shipped_item"]["size"])})
+    rows.sort(key=lambda r: r["ordered_on"], reverse=True)
+    return {"orders": rows, "stock": db.get("stock", {}), "modified": OMS_STATE.exists()}
+
+
+@app.post("/api/orders/reset")
+async def reset_orders():
+    OMS_STATE.unlink(missing_ok=True)
+    await publish({"type": "orders_changed"})
+    return {"ok": True}

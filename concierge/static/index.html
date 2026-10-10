@@ -115,6 +115,31 @@ pre{margin:6px 0 0;max-height:260px;overflow:auto;background:var(--bg);border:1p
 .modal.show{display:flex}
 .modal .box{width:min(720px,92vw);max-height:80vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
 .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--err);color:var(--text);padding:10px 16px;border-radius:10px;display:none;z-index:10;max-width:80vw}
+.tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px}
+.tabs button{padding:6px 14px;border-radius:7px;background:none;color:var(--muted);font-weight:600;font-size:13px}
+.tabs button.on{background:var(--panel2);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+#ordersView{display:none;height:calc(100% - 59px);overflow:auto;padding:20px 24px}
+body.orders main{display:none} body.orders #ordersView{display:block}
+.otop{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.otop h2{margin:0;font-size:18px} .otop .sub{color:var(--muted);font-size:12.5px}
+.ogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px}
+.ocard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;transition:border-color .4s,box-shadow .4s}
+.ocard.flash{border-color:var(--mcp);box-shadow:0 0 0 1px var(--mcp),0 0 24px rgba(45,212,191,.25)}
+.ocard .h{display:flex;align-items:center;gap:10px}
+.ocard .oid{font:600 15px "JetBrains Mono",monospace}
+.st{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;letter-spacing:.3px}
+.st.Delivered{background:rgba(74,222,128,.12);color:var(--ok)} .st.In{background:rgba(250,204,21,.12);color:var(--warn)}
+.st.Processing{background:rgba(147,197,253,.12);color:#93c5fd} .st.Refunded{background:rgba(248,113,113,.12);color:var(--err)}
+.tier{margin-left:auto;font-size:11px;color:var(--muted);border:1px solid var(--line);padding:2px 8px;border-radius:999px}
+.ocard .cust{margin:8px 0 10px;font-size:13px} .ocard .cust span{color:var(--muted)}
+.orow{display:grid;grid-template-columns:96px 1fr;gap:4px 10px;font-size:12.5px;margin:3px 0}
+.orow b{color:var(--muted);font-weight:500}
+.flag{color:var(--err);font-weight:600} .okc{color:var(--ok)}
+.strike{text-decoration:line-through;color:var(--dim)}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.pill2{font:11px "JetBrains Mono",monospace;padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:var(--panel2)}
+.pill2.rf{border-color:rgba(248,113,113,.4);color:#fca5a5} .pill2.sc{border-color:rgba(167,139,250,.45);color:#c4b5fd} .pill2.rd{border-color:rgba(45,212,191,.45);color:#5eead4}
+.hist{margin-top:8px;border-top:1px dashed var(--line);padding-top:8px;font-size:11.5px;color:var(--muted)}
 @media (max-width:1300px){main{grid-template-columns:300px 1fr 340px}.stats .stat:nth-child(4){display:none}}
 </style>
 </head>
@@ -123,6 +148,7 @@ pre{margin:6px 0 0;max-height:260px;overflow:auto;background:var(--bg);border:1p
   <div class="logo"><div class="mark">F</div><div>Fashionocracy Agent Mesh<small>A2A orchestration · MCP tooling · Zendesk system of record</small></div></div>
   <span class="pill" id="modePill"><span class="dot" id="modeDot"></span><span id="modeText">checking…</span></span>
   <button class="btn" id="connectBtn" style="display:none">Connect Zendesk</button>
+  <div class="tabs"><button id="tabMesh" class="on">Agent mesh</button><button id="tabOrders">Orders <span id="ordCount" style="color:var(--dim)"></span></button></div>
   <div class="spacer"></div>
   <div class="stats">
     <div class="stat a2a"><b id="cA2A">0</b><span>A2A messages</span></div>
@@ -191,6 +217,12 @@ pre{margin:6px 0 0;max-height:260px;overflow:auto;background:var(--bg);border:1p
     <div id="log"><div class="empty">Every A2A message, MCP tool call and API request appears here — click to inspect the payload.</div></div>
   </section>
 </main>
+
+<section id="ordersView">
+  <div class="otop"><h2>🏬 Fashionocracy OMS</h2><span class="sub" id="oSub">Live view of the order system the agents change through the OMS MCP server</span>
+    <div class="spacer"></div><button class="btn" id="oRefresh">↻ Refresh</button><button class="btn" id="oReset">Reset demo data</button></div>
+  <div class="ogrid" id="ogrid"></div>
+</section>
 
 <div class="modal" id="modal"><div class="box"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">Written to Zendesk by the agent mesh</h3><button class="close" onclick="modal.classList.remove('show')">✕</button></div><pre id="noteBody" style="max-height:60vh"></pre></div></div>
 <div class="toast" id="toast"></div>
@@ -400,6 +432,47 @@ async function status(){
 }
 $("connectBtn").onclick=()=>location.href="/oauth/start";
 status(); setInterval(status,10000);
+
+// ---------- Orders tab
+let lastOrders={};
+function setTab(t){ document.body.classList.toggle("orders",t==="orders"); $("tabOrders").classList.toggle("on",t==="orders"); $("tabMesh").classList.toggle("on",t!=="orders");
+  try{localStorage.setItem("tab",t)}catch(e){} if(t==="orders") loadOrders(); }
+$("tabMesh").onclick=()=>setTab("mesh"); $("tabOrders").onclick=()=>setTab("orders");
+const esc=x=>String(x??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+async function loadOrders(){
+  try{
+    const d=await (await fetch("/api/orders")).json();
+    $("ordCount").textContent=d.orders.length;
+    $("oSub").textContent = d.modified ? "Showing live state - changed by the agents via MCP (Reset to restore seed data)" : "Seed data - no changes made by the agents yet";
+    $("ogrid").innerHTML=d.orders.map(o=>{
+      const st=o.status.split(" ")[0];
+      const sig=JSON.stringify([o.status,o.shipping_address,o.eta,o.refund,o.store_credit,o.last_scan]);
+      const changed=lastOrders[o.order_id]!==undefined && lastOrders[o.order_id]!==sig; lastOrders[o.order_id]=sig;
+      const addrChanged=o.original_address && o.original_address!==o.shipping_address;
+      const it=o.item, sh=o.shipped_item, c=o.customer;
+      return `<div class="ocard ${changed?"flash":""}" id="o-${o.order_id}">
+        <div class="h"><span class="oid">${o.order_id}</span><span class="st ${st}">${esc(o.status)}</span><span class="tier">${esc(c.tier)} · AED ${c.lifetime_value_aed} LTV</span></div>
+        <div class="cust">${esc(c.name)} <span>· ${esc(c.email)}</span></div>
+        <div class="orow"><b>Item</b><span>${esc(it.name)} · ${esc(it.colour)} / ${esc(it.size)} · AED ${it.price_aed}</span></div>
+        <div class="orow"><b>Shipped</b><span class="${o.mismatch?"flag":"okc"}">${esc(sh.colour)} / ${esc(sh.size)} ${o.mismatch?"⚠ mismatch":"✓"}</span></div>
+        <div class="orow"><b>Carrier</b><span class="mono">${esc(o.carrier)} · ${esc(o.tracking)}</span></div>
+        <div class="orow"><b>Dates</b><span>Ordered ${o.ordered_on} · ${o.delivered_on?("Delivered "+o.delivered_on):("ETA "+o.eta)}</span></div>
+        ${o.last_scan?`<div class="orow"><b>Last scan</b><span>${esc(o.last_scan)}</span></div>`:""}
+        <div class="orow"><b>Ship to</b><span>${addrChanged?`<span class="strike">${esc(o.original_address)}</span><br>`:""}${esc(o.shipping_address)}</span></div>
+        <div class="pills">${o.refund?`<span class="pill2 rf">💸 ${o.refund.refund_id} · AED ${o.refund.amount_aed}</span>`:""}
+          ${o.store_credit?`<span class="pill2 sc">🎁 ${o.store_credit.credit_code} · AED ${o.store_credit.amount_aed}</span>`:""}
+          ${addrChanged?`<span class="pill2 rd">📍 address changed</span>`:""}</div>
+        ${(o.history||[]).length?`<div class="hist">${o.history.map(h=>`${h.on} · ${esc(h.event.replace(/_/g," "))}${h.ref?" · "+esc(h.ref):""}`).join("<br>")}</div>`:""}
+      </div>`;}).join("");
+  }catch(e){ $("ogrid").innerHTML=`<div class="empty">Could not load orders: ${esc(e)}</div>`; }
+}
+$("oRefresh").onclick=loadOrders;
+$("oReset").onclick=async()=>{ if(!confirmReset()) return; await fetch("/api/orders/reset",{method:"POST"}); lastOrders={}; loadOrders(); };
+function confirmReset(){ const b=$("oReset"); if(b.dataset.arm){ delete b.dataset.arm; b.textContent="Reset demo data"; return true; }
+  b.dataset.arm=1; b.textContent="Click again to reset"; setTimeout(()=>{delete b.dataset.arm; b.textContent="Reset demo data";},3000); return false; }
+es.addEventListener("message",m=>{ try{ const ev=JSON.parse(m.data); if(ev.type==="orders_changed") loadOrders(); }catch(e){} });
+loadOrders();
+try{ if(localStorage.getItem("tab")==="orders") setTab("orders"); }catch(e){}
 </script>
 </body>
 </html>
